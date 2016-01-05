@@ -294,6 +294,58 @@ static void sun6i_a31_get_pll6_factors(struct factors_request *req)
 }
 
 /**
+ * sun6i_a31_get_pll_mipi_factors() - calculates n, m, k factors for A31 MIPI PLL
+ * MIPI PLL rate is calculated as follows
+ * rate = parent_rate * (n + 1) * (k +1) / (m + 1)
+ * parent_rate comes from the A31 PLL3
+ */
+
+static void sun6i_a31_get_pll_mipi_factors(struct factors_request *req)
+{
+	u32 best_rate = 0, best_diff = ULONG_MAX;
+	u8 best_n = 1, best_k = 1, best_m = 1;
+	u8 calcm;
+
+	for (calcm = 1; calcm <= 16; calcm++) {
+		u8 calck;
+
+		for (calck = 1; calck <= 4; calck++) {
+			u8 calcn = req->rate * calcm / (req->parent_rate * calck);
+			u32 new_rate = req->parent_rate * calcn * calck / calcm;
+			u32 diff;
+
+			if (new_rate > req->rate)
+				diff = new_rate - req->rate;
+			else
+				diff = req->rate - new_rate;
+
+			pr_debug("%s: New rate %u (n %u, k %u, m %u), diff with requested rate %u\n",
+				 __func__, new_rate, calcn, calck, calcm, diff);
+
+			if (diff < best_diff) {
+				best_diff = diff;
+				best_rate = new_rate;
+				best_n = calcn;
+				best_k = calck;
+				best_m = calcm;
+			}
+
+			if (!diff) {
+				pr_debug("%s: Found exact match, returning...\n",
+					 __func__);
+				goto out;
+			}
+		}
+	}
+
+out:
+	req->rate = best_rate;
+	req->n = best_n - 1;
+	req->k = best_k - 1;
+	req->m = best_m - 1;
+}
+
+/**
  * sun5i_a13_get_ahb_factors() - calculates m, p factors for AHB
  * AHB rate is calculated as follows
  * rate = parent_rate >> p
@@ -521,6 +573,16 @@ static const struct clk_factors_config sun6i_a31_pll6_config = {
 	.n_start = 1,
 };
 
+static struct clk_factors_config sun6i_a31_pll_mipi_config = {
+	.nshift = 8,
+	.nwidth = 4,
+	.kshift = 4,
+	.kwidth = 2,
+	.mshift = 0,
+	.mwidth = 4,
+	.n_start = 1,
+};
+
 static const struct clk_factors_config sun5i_a13_ahb_config = {
 	.pshift = 4,
 	.pwidth = 2,
@@ -588,6 +650,12 @@ static const struct factors_data sun6i_a31_pll6_data __initconst = {
 	.enable = 31,
 	.table = &sun6i_a31_pll6_config,
 	.getter = sun6i_a31_get_pll6_factors,
+};
+
+static const struct factors_data sun6i_a31_pll_mipi_data __initconst = {
+	.enable = 31,
+	.table = &sun6i_a31_pll_mipi_config,
+	.getter = sun6i_a31_get_pll_mipi_factors,
 };
 
 static const struct factors_data sun5i_a13_ahb_data __initconst = {
@@ -669,6 +737,13 @@ static void __init sun7i_pll4_clk_setup(struct device_node *node)
 }
 CLK_OF_DECLARE(sun7i_pll4, "allwinner,sun7i-a20-pll4-clk",
 	       sun7i_pll4_clk_setup);
+
+static void __init sun6i_mipi_clk_setup(struct device_node *node)
+{
+	sunxi_factors_clk_setup(node, &sun6i_a31_pll_mipi_data);
+}
+CLK_OF_DECLARE(sun6i_mipi, "allwinner,sun6i-a31-mipi-clk",
+	       sun6i_mipi_clk_setup);
 
 static void __init sun5i_ahb_clk_setup(struct device_node *node)
 {
