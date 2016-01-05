@@ -200,6 +200,51 @@ static void sun8i_a23_get_pll1_factors(struct factors_request *req)
 }
 
 /**
+ * sun6i_a31_get_pll3_factors() - calculates n, m factors for A31 PLL3
+ * PLL3 rate is calculated as follows
+ * rate = parent_rate * (n + 1) / (m + 1)
+ * parent_rate is always 24Mhz
+ */
+
+static void sun6i_a31_get_pll3_factors(struct factors_request *req)
+{
+	u32 best_rate = 0, best_diff = ULONG_MAX;
+	u8 best_n = 1, best_m = 1;
+	u8 calcm;
+
+	for (calcm = 1; calcm <= 16; calcm++) {
+		u8 calcn = req->rate * calcm / req->parent_rate;
+		u32 new_rate = req->parent_rate * calcn / calcm;
+		u32 diff;
+
+		if (new_rate > req->rate)
+			diff = new_rate - req->rate;
+		else
+			diff = req->rate - new_rate;
+
+		pr_debug("%s: New rate %u (n %u, m %u), diff with requested rate %u\n",
+			 __func__, new_rate, calcn, calcm, diff);
+
+		if (diff < best_diff) {
+			best_diff = diff;
+			best_rate = new_rate;
+			best_n = calcn;
+			best_m = calcm;
+		}
+
+		if (!diff) {
+			pr_debug("%s: Found exact match, returning...\n",
+				 __func__);
+			break;
+		}
+	}
+
+	req->rate = best_rate;
+	req->n = best_n - 1;
+	req->m = best_m - 1;
+}
+
+/**
  * sun4i_get_pll5_factors() - calculates n, k factors for PLL5
  * PLL5 rate is calculated as follows
  * rate = parent_rate * n * (k + 1)
@@ -453,6 +498,14 @@ static const struct clk_factors_config sun8i_a23_pll1_config = {
 	.n_start = 1,
 };
 
+static const struct clk_factors_config sun6i_a31_pll3_config = {
+	.nshift = 8,
+	.nwidth = 7,
+	.mshift = 0,
+	.mwidth = 4,
+	.n_start = 1,
+};
+
 static const struct clk_factors_config sun4i_pll5_config = {
 	.nshift = 8,
 	.nwidth = 5,
@@ -511,6 +564,12 @@ static const struct factors_data sun8i_a23_pll1_data __initconst = {
 	.enable = 31,
 	.table = &sun8i_a23_pll1_config,
 	.getter = sun8i_a23_get_pll1_factors,
+};
+
+static const struct factors_data sun6i_a31_pll3_data __initconst = {
+	.enable = 31,
+	.table = &sun6i_a31_pll3_config,
+	.getter = sun6i_a31_get_pll3_factors,
 };
 
 static const struct factors_data sun7i_a20_pll4_data __initconst = {
@@ -596,6 +655,13 @@ static void __init sun8i_pll1_clk_setup(struct device_node *node)
 }
 CLK_OF_DECLARE(sun8i_pll1, "allwinner,sun8i-a23-pll1-clk",
 	       sun8i_pll1_clk_setup);
+
+static void __init sun6i_pll3_clk_setup(struct device_node *node)
+{
+	sunxi_factors_clk_setup(node, &sun6i_a31_pll3_data);
+}
+CLK_OF_DECLARE(sun6i_pll3, "allwinner,sun6i-a31-pll3-clk",
+	       sun6i_pll3_clk_setup);
 
 static void __init sun7i_pll4_clk_setup(struct device_node *node)
 {
