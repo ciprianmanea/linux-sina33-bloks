@@ -1293,6 +1293,29 @@ static const struct panel_desc shelly_sca07010_bfn_lnn = {
 	.bus_format = MEDIA_BUS_FMT_RGB666_1X18,
 };
 
+static const struct drm_display_mode sinlinx_sina33_lcd_7_mode = {
+	.clock = 66000,
+	.hdisplay = 1024,
+	.hsync_start = 1024 + 160,
+	.hsync_end = 1024 + 160 + 70,
+	.htotal = 1024 + 160 + 70 + 90,
+	.vdisplay = 600,
+	.vsync_start = 600 + 127,
+	.vsync_end = 600 + 127 + 20,
+	.vtotal = 600 + 127 + 20 + 3,
+	.vrefresh = 60,
+};
+
+static const struct panel_desc sinlinx_sina33_lcd_7 = {
+	.modes = &sinlinx_sina33_lcd_7_mode,
+	.num_modes = 1,
+	.size = {
+		.width = 154,
+		.height = 87,
+	},
+	.bus_format = MEDIA_BUS_FMT_RGB666_1X18,
+};
+
 static const struct drm_display_mode tpk_f07a_0102_mode = {
 	.clock = 33260,
 	.hdisplay = 800,
@@ -1489,6 +1512,9 @@ static const struct of_device_id platform_of_match[] = {
 	}, {
 		.compatible = "shelly,sca07010-bfn-lnn",
 		.data = &shelly_sca07010_bfn_lnn,
+	}, {
+		.compatible = "sinlinx,sina33-lcd-7",
+		.data = &sinlinx_sina33_lcd_7,
 	}, {
 		.compatible = "tpk,f07a-0102",
 		.data = &tpk_f07a_0102,
