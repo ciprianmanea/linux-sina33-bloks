@@ -163,6 +163,8 @@ struct sun4i_tcon {
 	bool				has_mux;
 
 	struct drm_panel		*panel;
+
+	bool				has_channel_1;
 };
 
 /* Global Control */
