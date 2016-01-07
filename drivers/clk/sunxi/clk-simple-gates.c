@@ -146,6 +146,8 @@ CLK_OF_DECLARE(sun9i_a80_apb1, "allwinner,sun9i-a80-apb1-gates-clk",
 	       sunxi_simple_gates_init);
 CLK_OF_DECLARE(sun9i_a80_apbs, "allwinner,sun9i-a80-apbs-gates-clk",
 	       sunxi_simple_gates_init);
+CLK_OF_DECLARE(sun8i_a33_dram, "allwinner,sun8i-a33-dram-gates-clk",
+	       sunxi_simple_gates_init);
 
 static const int sun4i_a10_ahb_critical_clocks[] __initconst = {
 	14,	/* ahb_sdram */
