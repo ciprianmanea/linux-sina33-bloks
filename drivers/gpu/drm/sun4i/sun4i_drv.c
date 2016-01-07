@@ -216,7 +216,8 @@ static bool sun4i_drv_node_is_frontend(struct device_node *node)
 
 static bool sun4i_drv_node_is_tcon(struct device_node *node)
 {
-	return of_device_is_compatible(node, "allwinner,sun5i-a13-tcon");
+	return of_device_is_compatible(node, "allwinner,sun5i-a13-tcon") ||
+		of_device_is_compatible(node, "allwinner,sun8i-a23-tcon");
 }
 
 static int compare_of(struct device *dev, void *data)
