@@ -15,6 +15,7 @@ obj-y += clk-sun4i-display.o
 obj-y += clk-sun4i-pll3.o
 obj-y += clk-sun4i-tcon-ch1.o
 obj-y += clk-sun8i-bus-gates.o
+obj-y += clk-sun8i-gpu.o
 obj-y += clk-sun8i-mbus.o
 obj-y += clk-sun9i-core.o
 obj-y += clk-sun9i-mmc.o
